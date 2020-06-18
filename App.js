@@ -1,11 +1,12 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {View, Text, TextInput} from 'react-native';
 import {styles} from './styles.js';
-import * as data from './mockData.json';
-// import {useFetch} from './utils/useFetch.js';
+import Geolocation from '@react-native-community/geolocation';
+// import * as data from './mockData.json';
+import {useFetch} from './utils/useFetch.js';
 import moment from 'moment';
 import windrose from 'windrose';
-// import {API_KEY} from 'react-native-dotenv';
+import {API_KEY} from 'react-native-dotenv';
 import {
   Bolt,
   Cloud,
@@ -22,21 +23,42 @@ import {
 } from './svgs';
 
 export const App = () => {
-  // const {data, error, isLoading} = useFetch(
-  //   `http://api.openweathermap.org/data/2.5/weather?q=Lisbon,pt&APPID=${API_KEY}`,
-  // );
-  // const [data, setData] = useState(response);
-  const [searchValue, setSearchValue] = useState(null);
+  const [searchValue, setSearchValue] = useState('');
 
-  console.log(data);
+  if (!searchValue) {
+    Geolocation.getCurrentPosition(({coords: {latitude, longitude}}) =>
+      setUrl(
+        `http://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${API_KEY}`,
+      ),
+    );
+  }
 
-  // if (error) {
-  //   console.log(error);
-  // }
+  const generateUrl = (key) =>
+    `http://api.openweathermap.org/data/2.5/weather?q=${key}&APPID=${API_KEY}`;
 
-  // if (isLoading) {
-  //   return <Text style={styles.header}>Loading...</Text>;
-  // }
+  const [url, setUrl] = useState('');
+  const {data, error, isLoading} = useFetch(url);
+
+  const onSearch = (key) => {
+    setUrl(generateUrl(key));
+  };
+
+  if (error) {
+    <View style={styles.container}>
+      <Text style={styles.header}>What's the weather in...</Text>
+      <TextInput
+        style={styles.inputField}
+        value={searchValue}
+        onChangeText={(text) => setSearchValue(text)}
+        onEndEditing={() => onSearch(searchValue)}
+      />
+      <Text style={styles.header}>No city match</Text>
+    </View>;
+  }
+
+  if (isLoading) {
+    return <Text style={styles.header}>Loading...</Text>;
+  }
 
   if (data) {
     const cityName = `${data.name}, ${data.sys.country}`;
@@ -54,7 +76,6 @@ export const App = () => {
       data.weather[0].description[0],
       (x) => x.toUpperCase(),
     );
-
     return (
       <View style={styles.container}>
         <Text style={styles.header}>What's the weather in...</Text>
@@ -63,7 +84,7 @@ export const App = () => {
           style={styles.inputField}
           value={searchValue}
           onChangeText={(text) => setSearchValue(text)}
-          onEndEditing={() => console.log('poo')}
+          onEndEditing={() => onSearch(searchValue)}
         />
         {/* </TouchableOpacity> */}
         <Text style={styles.header}>{cityName}</Text>
