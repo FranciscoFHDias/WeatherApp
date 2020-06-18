@@ -1,8 +1,7 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState} from 'react';
 import {View, Text, TextInput} from 'react-native';
 import {styles} from './styles.js';
 import Geolocation from '@react-native-community/geolocation';
-// import * as data from './mockData.json';
 import {useFetch} from './utils/useFetch.js';
 import moment from 'moment';
 import windrose from 'windrose';
@@ -19,17 +18,18 @@ import {
   RainNight,
   Snow,
   Sun,
-  Wind,
 } from './svgs';
 
 export const App = () => {
   const [searchValue, setSearchValue] = useState('');
 
   if (!searchValue) {
-    Geolocation.getCurrentPosition(({coords: {latitude, longitude}}) =>
-      setUrl(
-        `http://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${API_KEY}`,
-      ),
+    Geolocation.getCurrentPosition(({coords}) =>
+      coords
+        ? setUrl(
+            `http://api.openweathermap.org/data/2.5/weather?lat=${coords.latitude}&lon=${coords.longitude}&appid=${API_KEY}`,
+          )
+        : generateUrl('London'),
     );
   }
 
@@ -41,6 +41,31 @@ export const App = () => {
 
   const onSearch = (key) => {
     setUrl(generateUrl(key));
+  };
+
+  const SVG = ({weather}) => {
+    switch (weather) {
+      case 'clear sky':
+        return <Sun width={120} height={80} />;
+      case 'few clouds':
+        return <Cloud width={120} height={80} />;
+      case 'scattered clouds':
+        return <Overcast width={120} height={80} />;
+      case 'broken clouds':
+        return <Overcast width={120} height={80} />;
+      case 'shower rain':
+        return <Rain width={120} height={80} />;
+      case 'rain':
+        return <HeavyRain width={120} height={80} />;
+      case 'thunderstorm':
+        return <Bolt width={120} height={80} />;
+      case 'snow':
+        return <Snow width={120} height={80} />;
+      case 'mist':
+        return <Fog width={120} height={80} />;
+      default:
+        return <Cloud width={120} height={80} />;
+    }
   };
 
   if (error) {
@@ -79,20 +104,19 @@ export const App = () => {
     return (
       <View style={styles.container}>
         <Text style={styles.header}>What's the weather in...</Text>
-        {/* <TouchableOpacity onPress={() => console.log('Pressed')}> */}
         <TextInput
           style={styles.inputField}
           value={searchValue}
           onChangeText={(text) => setSearchValue(text)}
           onEndEditing={() => onSearch(searchValue)}
         />
-        {/* </TouchableOpacity> */}
-        <Text style={styles.header}>{cityName}</Text>
-        <Sun width={120} height={40} />
-        <Wind width={120} height={40} />
+        <Text style={styles.title}>{cityName}</Text>
+        <View style={styles.image}>
+          <SVG weather={data.weather[0].description} />
+        </View>
         <Text style={styles.header}>
-          Today: {weather} currently. It's {temp}&#8451; the high will be{' '}
-          {maxTemp}&#8451;.
+          {weather} currently. It's {temp}&#8451; and the high will be {maxTemp}
+          &#8451;.
         </Text>
         <Text style={styles.header}>
           {windDirection.symbol} {windSpeed} mph
