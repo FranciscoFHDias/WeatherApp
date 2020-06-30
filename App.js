@@ -6,83 +6,87 @@ import {useFetch} from './utils/useFetch.js';
 import moment from 'moment';
 import windrose from 'windrose';
 import {API_KEY} from 'react-native-dotenv';
-import {
-  Bolt,
-  Cloud,
-  CloudNight,
-  Fog,
-  HeavyRain,
-  Moon,
-  Overcast,
-  Rain,
-  RainNight,
-  Snow,
-  Sun,
-} from './svgs';
+import {Bolt, Cloud, Fog, HeavyRain, Overcast, Rain, Snow, Sun} from './svgs';
 
 export const App = () => {
   const [searchValue, setSearchValue] = useState('');
+  // const [coords, setCoords] = useState(null);
+  const [url, setUrl] = useState(
+    `http://api.openweathermap.org/data/2.5/weather?q=London&APPID=${API_KEY}`,
+  );
 
-  if (!searchValue) {
-    Geolocation.getCurrentPosition(({coords}) =>
-      coords
-        ? setUrl(
-            `http://api.openweathermap.org/data/2.5/weather?lat=${coords.latitude}&lon=${coords.longitude}&appid=${API_KEY}`,
-          )
-        : generateUrl('London'),
-    );
-  }
+  // Geolocation.getCurrentPosition(({geoCoords}) => setCoords(geoCoords));
 
   const generateUrl = (key) =>
     `http://api.openweathermap.org/data/2.5/weather?q=${key}&APPID=${API_KEY}`;
 
-  const [url, setUrl] = useState('');
+  // if (!coords) {
+  //   setUrl(generateUrl('London'));
+  // } else {
+  //   setUrl(
+  //     `http://api.openweathermap.org/data/2.5/weather?lat=${coords.latitude}&lon=${coords.longitude}&appid=${API_KEY}`,
+  //   );
+  // }
+
   const {data, error, isLoading} = useFetch(url);
 
   const onSearch = (key) => {
+    key.toLowerCase();
     setUrl(generateUrl(key));
   };
 
   const SVG = ({weather}) => {
-    switch (weather) {
-      case 'clear sky':
-        return <Sun width={120} height={80} />;
-      case 'few clouds':
-        return <Cloud width={120} height={80} />;
-      case 'scattered clouds':
-        return <Overcast width={120} height={80} />;
-      case 'broken clouds':
-        return <Overcast width={120} height={80} />;
-      case 'shower rain':
-        return <Rain width={120} height={80} />;
-      case 'rain':
-        return <HeavyRain width={120} height={80} />;
-      case 'thunderstorm':
-        return <Bolt width={120} height={80} />;
-      case 'snow':
-        return <Snow width={120} height={80} />;
-      case 'mist':
-        return <Fog width={120} height={80} />;
-      default:
-        return <Cloud width={120} height={80} />;
+    if (weather === 'clear sky') {
+      return <Sun width={120} height={80} />;
     }
+    if (weather === 'few clouds') {
+      return <Cloud width={120} height={80} />;
+    }
+    if (weather === 'scattered clouds') {
+      return <Overcast width={120} height={80} />;
+    }
+    if (weather === 'broken clouds') {
+      return <Overcast width={120} height={80} />;
+    }
+    if (weather === 'shower rain' || weather === 'light rain') {
+      return <Rain width={120} height={80} />;
+    }
+    if (weather === 'rain') {
+      return <HeavyRain width={120} height={80} />;
+    }
+    if (weather === 'thunderstorm') {
+      return <Bolt width={120} height={80} />;
+    }
+    if (weather === 'snow') {
+      return <Snow width={120} height={80} />;
+    }
+    if (weather === 'mist') {
+      return <Fog width={120} height={80} />;
+    }
+    return null;
   };
 
   if (error) {
-    <View style={styles.container}>
-      <Text style={styles.header}>What's the weather in...</Text>
-      <TextInput
-        style={styles.inputField}
-        value={searchValue}
-        onChangeText={(text) => setSearchValue(text)}
-        onEndEditing={() => onSearch(searchValue)}
-      />
-      <Text style={styles.header}>No city match</Text>
-    </View>;
+    return (
+      <View style={styles.container}>
+        <Text style={styles.header}>What's the weather in...</Text>
+        <TextInput
+          style={styles.inputField}
+          value={searchValue}
+          onChangeText={(text) => setSearchValue(text)}
+          onEndEditing={() => onSearch(searchValue)}
+        />
+        <Text style={styles.header}>No city match</Text>
+      </View>
+    );
   }
 
   if (isLoading) {
-    return <Text style={styles.header}>Loading...</Text>;
+    return (
+      <View style={styles.container}>
+        <Text style={styles.header}>Loading...</Text>
+      </View>
+    );
   }
 
   if (data) {

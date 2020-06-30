@@ -12,6 +12,11 @@ export const useFetch = (url) => {
         try {
           setIsLoading(true);
           const res = await fetch(url);
+
+          if (!res.ok) {
+            throw Error('Unsuccessful repsonse');
+          }
+
           const json = await res.json();
           setData(json);
           setIsLoading(false);
